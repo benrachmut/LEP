@@ -92,14 +92,18 @@ public class DynamicPoliceAllocation {
 		//printCurrentAllocation();
 
 		do {
-			currentDiaryEvent = diary.pollFirst();
+			
+			
+			currentDiaryEvent = diary.pollFirst(); // extract the next event
 			if (currentDiaryEvent instanceof EndShiftEvent) {
 				break;
 			}
-			Tnow = currentDiaryEvent.getTime();
+			Tnow = currentDiaryEvent.getTime(); // the begining of the pulled event from the diary
 			SW.discountedSW(cumulativeSW, Tnow, Told, activeEvents, metrics);
 			metrics.sumTime(Tnow, Told, policeUnits);
-			Told = Tnow;
+			Told = Tnow; // 
+			
+			// checks what type of event and use the relevent method
 			if (currentDiaryEvent instanceof NewDiaryEvent) {
 				oldAllocation = currentAllocation;
 				handleNewEvent();
@@ -254,8 +258,8 @@ public class DynamicPoliceAllocation {
 	// Handles with new event that arrives to the system.
 	private void handleNewEvent() {
 		metrics.countEvents(currentDiaryEvent);
-		reallocation();
-		activeEvents.add(currentDiaryEvent.getEvent());
+		reallocation(); // clean the current allocation, the agents are aware that they are allocated
+		activeEvents.add(currentDiaryEvent.getEvent()); // the current events that take place in the simulation 
 		solveAlgorithm();// solve
 		checkNewAllocation();
 		metrics.calculateRealocation(oldAllocation, currentAllocation,
@@ -362,16 +366,30 @@ public class DynamicPoliceAllocation {
 	}
 
 	public void solveAlgorithm(){
-		updateLocation();
-		creatUtilities(activeEvents);
-//	    creatLinearUtilitiesWithThreshold(activeEvents);
-//		checkZeroUtility(utilities);
+		
+		
+		//-----relevent for all
+		updateLocation(); //  if im on the way for a task, where im relevent to the task
+		creatUtilities(activeEvents); // creates the Utilities 
+		
+		//-----relevent for all
+		//creatLinearUtilitiesWithThreshold(activeEvents);
+		
+		checkZeroUtility(utilities); // if there is very little left so I make it zero by force so fisher will work
 		// DistributedSolver s = new DistributedSolver(utilities, 2,policeUnits,
 		// activeEvents, null);
+		
 		UtilityBPBComparator2.tnow = Tnow;
-//		FisherDistributedSolver s = new FisherDistributedSolver(utilities,
-//		new CooperativeCycleOrdering(activeEventsForAllocation, Tnow,
-//		policeUnits), activeEventsForAllocation);
+		
+		CooperativeCycleOrdering cco = new CooperativeCycleOrdering(activeEventsForAllocation, Tnow,
+				policeUnits);
+		
+		FisherDistributedSolverCA s = new FisherDistributedSolverCA(utilities,
+				cco, activeEventsForAllocation, policeUnits, Tnow);
+		
+		//FisherDistributedSolver s = new FisherDistributedSolver(utilities,
+		//new CooperativeCycleOrdering(activeEventsForAllocation, Tnow,
+		//policeUnits), activeEventsForAllocation);
 		
 		//FisherSolverHetro s = new FisherSolverHetro(utilities,
 				//new CooperativeCycleOrdering(activeEventsForAllocation, Tnow,
@@ -383,11 +401,10 @@ public class DynamicPoliceAllocation {
 		// LPsolver s = new LPsolver(utilities, new
 		// CooperativeCycleOrdering(activeEvents,Tnow,
 		// policeUnits),activeEvents);
-		 SATotalSolver s=new SATotalSolver(null, policeUnits, activeEvents,
-				 currentDiaryEvent.getEvent(), currentAllocation, Tnow);
+		 //SATotalSolver s=new SATotalSolver(null, policeUnits, activeEvents,
+				 //currentDiaryEvent.getEvent(), currentAllocation, Tnow);
 		
-		// JenningsMaxUtilityHeuristic s = new
-		// JenningsMaxUtilityHeuristic(utilities, policeUnits,
+		// JenningsMaxUtilityHeuristic s = new JenningsMaxUtilityHeuristic(utilities, policeUnits,
 		// activeEvents,null);
 		// JonesSolver s= new JonesSolver(utilities, null,
 		// null,currentDiaryEvent.getEvent(), currentAllocation,

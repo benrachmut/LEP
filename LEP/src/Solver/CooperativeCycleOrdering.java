@@ -25,7 +25,6 @@ public class CooperativeCycleOrdering extends CooparativeOrdering {
 		for (Task e : activeEvents) {
 			if (e.getNumAgentsRequiered() > 1) {
 				hardConstraint(e, allocation);
-				
 			}
 		}
 		//System.out.println("Done hard constraint");

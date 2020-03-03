@@ -12,31 +12,40 @@ public class MetricsSummary {
 
 	
 	private String algorithmName;
+	
 	// Number of incoming events for every type
 	private int numOfEvents;
 	private double numOfShifts;
+	
 	// Number of allocated events
 	private double alloctedEvent1 = 0, alloctedEvent2 = 0,
 			alloctedEvent3 = 0, alloctedEvent4 = 0,
 			alloctedEvent = 0;
+	
 	//Number of completed events
 	private double percentageOfCompletedEvent1 = 0;
 	private double percentageOfCompletedEvent2 = 0;
 	private double percentageOfCompletedEvent3 = 0;
 	private double percentageOfCompletedEvent4 = 0;
 	private double percentageOfCompletedEvent = 0;
+	
 	// Number of abandoned events
 	private double abandonedEvents = 0, abandonedEvents1 = 0,
 			abandonedEvents2 = 0, abandonedEvents3 = 0, abandonedEvents4 = 0;
+	
 	//Percentage of sharing for type 1 and type 2
 	private double sharing1_1=0, sharing1_2=0, sharing1_3 = 0, sharing2_1 = 0,sharing2_2 = 0;
-		//Percentage of working time on a mission from total time in the system;
+	
+	//Percentage of working time on a mission from total time in the system;
 	private double workTimeType1 = 0, workTimeType2 =0,workTimeType3 = 0, workTimeType4 =0, workTime = 0;
+	
 	// The time that mission waits until the agents start handling with
 	private double sumTime1, sumTime2, sumTime3, sumTime4, sumTime;
+	
 	// Sum of SW
 	private double SW1, SW2, SW3, SW4, SWP, SW, SWPenalty, SWPercent1,SWPercent2, SWPercent3, SWPercent4,SWPPercent,
 	SWC1, SWC2, SWC3, SWC4 ;
+	
 	// Number of sharing events
 	private double sharing, sharing1, sharing2;
 
@@ -101,23 +110,73 @@ public class MetricsSummary {
 	//Initialize the parameters 
 	public synchronized void setup(long num){
 		numOfEvents = (int) num;
-		alloctedEvent1 = 0;alloctedEvent2 = 0; alloctedEvent3 = 0;alloctedEvent4 = 0;alloctedEvent = 0;
+		alloctedEvent1 = 0;
+		alloctedEvent2 = 0; 
+		alloctedEvent3 = 0;
+		alloctedEvent4 = 0;
+		alloctedEvent = 0;
 		
-		abandonedEvents1 = 0; abandonedEvents2 = 0; abandonedEvents3 = 0; abandonedEvents4 = 0; abandonedEvents = 0;
+		abandonedEvents1 = 0; 
+		abandonedEvents2 = 0; 
+		abandonedEvents3 = 0; 
+		abandonedEvents4 = 0; 
+		abandonedEvents = 0;
 		
-		sumTime1 = 0; sumTime2 = 0; sumTime3 = 0; sumTime4 = 0; sumTime = 0;
-		sharing1 = 0; sharing2 = 0; sharing = 0;
+		sumTime1 = 0; 
+		sumTime2 = 0; 
+		sumTime3 = 0; 
+		sumTime4 = 0; 
+		sumTime = 0;
+		sharing1 = 0; 
+		sharing2 = 0; 
+		sharing = 0;
 		
-		SW1 = 0; SW2 = 0; SW3 = 0; SW4 = 0;SWP = 0; SW = 0; SWPenalty = 0;
-		SWC1 = 0; SWC2 = 0; SWC3 = 0; SWC4 = 0;
-		SWPercent1 = 0; SWPercent2 = 0; SWPercent3 = 0; SWPercent4  = 0; SWPPercent = 0;
+		SW1 = 0;
+		SW2 = 0;
+		SW3 = 0;
+		SW4 = 0;
+		SWP = 0;
+		SW = 0;
 		
-		workingTime = 0; waitingTime = 0; movingTime = 0;workingPatrols = 0;
-		workingTimePercent = 0;waitingTimePercent = 0;movingTimePercent = 0; workingPatrolsPercent = 0;
-		reallocation = 0; percentageOfCompletedEvent1 = 0;percentageOfCompletedEvent2 = 0;percentageOfCompletedEvent3 = 0;percentageOfCompletedEvent4 = 0;
+		SWPenalty = 0;
+		SWC1 = 0;
+		SWC2 = 0;
+		SWC3 = 0;
+		SWC4 = 0;
+		SWPercent1 = 0;
+		SWPercent2 = 0;
+		SWPercent3 = 0;
+		SWPercent4  = 0;
+		SWPPercent = 0;
+		
+		workingTime = 0;
+		waitingTime = 0;
+		movingTime = 0;
+		workingPatrols = 0;
+		workingTimePercent = 0;
+		waitingTimePercent = 0;
+		movingTimePercent = 0; 
+		workingPatrolsPercent = 0;
+		reallocation = 0; 
+		
+		percentageOfCompletedEvent1 = 0;
+		percentageOfCompletedEvent2 = 0;
+		percentageOfCompletedEvent3 = 0;
+		percentageOfCompletedEvent4 = 0;
 		percentageOfCompletedEvent = 0;
-		sharing1_1=0; sharing1_2=0; sharing1_3 = 0; sharing2_1 = 0;sharing2_2 = 0;
-		workTimeType1 = 0; workTimeType2 =0;workTimeType3 = 0; workTimeType4 =0; workTime = 0;
+		
+		sharing1_1=0;
+		sharing1_2=0;
+		sharing1_3 = 0;
+		sharing2_1 = 0;
+		sharing2_2 = 0;
+		
+		workTimeType1 = 0;
+		workTimeType2 =0;
+		workTimeType3 = 0;
+		workTimeType4 =0;
+		workTime = 0;
+		
 		createFile();
 		
 		

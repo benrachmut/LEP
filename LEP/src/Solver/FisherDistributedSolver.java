@@ -14,6 +14,7 @@ public class FisherDistributedSolver extends FisherSolver {
 	public FisherDistributedSolver(Utility[][] input,
 			TaskOrdering taskOrdering, Vector<Task> tasks) {
 		super(input, taskOrdering, tasks);
+		
 		// TODO Auto-generated constructor stub
 	}
 

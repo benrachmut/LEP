@@ -149,7 +149,7 @@ public class Initialize {
 
 	private HashMap<AgentType, Integer> unitsForMissionHomoge(int priority) {
 		HashMap<AgentType, Integer> unitsNeed = new HashMap<AgentType, Integer>();
-		int ran = 0;
+		//int ran = 0;
 		 
 		if (priority == 1) {
 			unitsNeed.put(AgentType.TYPE1, 3);
@@ -167,6 +167,7 @@ public class Initialize {
 	private HashMap<AgentType, Integer> unitsForMissionHetero(int priority) {
 		HashMap<AgentType, Integer> unitsNeed = new HashMap<AgentType, Integer>();
 		int ran = 0;
+		
 		 
 		if (priority == 1) {
 			unitsNeed.put(AgentType.TYPE1, 2);

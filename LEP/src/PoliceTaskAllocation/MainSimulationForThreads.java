@@ -15,7 +15,7 @@ public class MainSimulationForThreads {
 	 * @throws Exception
 	 */
 	//static HashMap<AgentType, Integer> agents;
-	public static int patrols = 4;
+	public static int patrols = 9;
 	static TreeMap<Double, Double> cumulativeSW;
 	static MetricsSummary metrics;
 	static long numOfMissionsOnShift;
@@ -24,28 +24,23 @@ public class MainSimulationForThreads {
 	static int agents;
 
 	public static void main(String[] args) throws Exception {
-
-		//int[] missions = {20, 40, 60, 80, 100};
-		int[] missions = {4};
-		for (i = 2; i <= 2; i++) {
-
-			String algorithm = "SA++";
-
+		for (i = 3; i <= 3; i++) {
+			String algorithm = "DFisher";
 			agents = (int) Math.pow(i, 2);
 			patrols = (int) Math.pow(i, 2);
-			algorithm = algorithm + "4";
 			metrics = new MetricsSummary(algorithm, 100);
-			for (int t = 0; t < 1;t++) {
+			int[] numTasks = {20, 40, 60, 80, 100};//, 40, 60, 80, 100};//{20, 40, 60, 80, 100};
 
-				
+			for (int t = 0; t < numTasks.length;t++) {
 				//numOfMissionsOnShift = Math.round(patrols*missions[t]/9.0);
-
-				numOfMissionsOnShift = missions[t];
+				numOfMissionsOnShift = numTasks[t];
 				metrics.setup(numOfMissionsOnShift);
-				cumulativeSW = new TreeMap<Double, Double>();
+				cumulativeSW = new TreeMap<Double, Double>();		
 				shift = 0;
-				int cores = 4;
+				/*
+				int cores = 1;
 				ThreadSimulation[] threads = new ThreadSimulation[cores];
+				
 				for (int j = 0; j < cores; j++) {
 					threads[j] = new ThreadSimulation();
 				}
@@ -55,6 +50,20 @@ public class MainSimulationForThreads {
 				for (int j = 0; j < cores; j++) {
 					threads[j].join();
 				}
+				
+				*/
+				
+				DynamicPoliceAllocation d = MainSimulationForThreads.newSimulation();
+				while(d!= null){
+					try {
+						d.runSimulation();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					d = MainSimulationForThreads.newSimulation();
+				}
+				
 				metrics.writeToFile();
 				WriteToFile.writeCumultiveUtilitiyToFile(cumulativeSW, 100,
 						algorithm, (int) numOfMissionsOnShift);

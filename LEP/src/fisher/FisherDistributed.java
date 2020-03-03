@@ -14,36 +14,19 @@ public class FisherDistributed {
 	protected int nofGoods;
 	protected double change;
 
-	public FisherDistributed(Utility[][] utilities) {
+	public FisherDistributed(Utility[][] utilities) { // input R matrix
 
-		this.nofGoods = utilities[0].length;
-		this.nofAgents = utilities.length;
-		currentAllocation = new Double[nofAgents][nofGoods];
-		bids = new double[nofAgents][nofGoods];
-		this.valuations = new Utility[nofAgents][nofGoods];
-		prices = new double[nofGoods];
-
-		final double[] valuationSums = new double[nofAgents];
-		for (int i = 0; i < nofAgents; i++) {
-			for (int j = 0; j < nofGoods; j++) {
-				if (utilities[i][j] != null) {
-					this.valuations[i][j] = (Utility) utilities[i][j].clone();
-					valuationSums[i] += utilities[i][j].getUtility(1);
-				}
-			}
-		}
-
-		for (int i = 0; i < nofAgents; i++) {
-			for (int j = 0; j < nofGoods; j++) {
-				if (utilities[i][j] != null) {
-					bids[i][j] = 1*(i+1);
-				}
-			}
-		}
+		initializeFields(utilities);
+		initializeValuations(utilities);
+		initializeBids(utilities);
 		//((ConcaveUtility)utilities[i][j]).getLinearUtility();
-		generateAllocations();
+		updatePriceVectorUsingBids();
+		updateCurrentAllocationMatrixAndChanges();
+		
+		//generateAllocations();
 	}
 
+	
 	// algorithm
 	public Double[][] algorithm() {
 		iterate();
@@ -54,36 +37,27 @@ public class FisherDistributed {
 		return currentAllocation;
 	}
 
-	// generates allocation according to current bids and prices
-	private Double[][] generateAllocations() {
+	
 
-		for (int j = 0; j < nofGoods; j++) {
-			prices[j] = 0;
-			for (int i = 0; i < nofAgents; i++) {
-				prices[j] += bids[i][j];
-			}
-		}
-		change = 0;
-		for (int i = 0; i < nofAgents; i++) {
-			for (int j = 0; j < nofGoods; j++) {
-				if (currentAllocation[i][j] != null) {
-					change += Math
-							.abs(((bids[i][j]/ prices[j]) - currentAllocation[i][j]));///aaaa
-				}
-				if (bids[i][j]/prices[j] > THRESHOLD) {
-					currentAllocation[i][j] = bids[i][j] / prices[j];//aaaaa
-				} else {
-					currentAllocation[i][j] = null;
-				}
-			}
-		}
-		return currentAllocation;
 
-	}
 
 	// next iteration: calculates prices, calculates current valuation and
 	// update the bids
 	public Double[][] iterate() {
+		updateBidsUsingUtilites();
+		updatePriceVectorUsingBids();
+		updateCurrentAllocationMatrixAndChanges();
+		//generateAllocations();
+		return currentAllocation;
+	}
+
+	public boolean isStable() {
+		return change < THRESHOLD;
+	}
+
+	//-----------METHODS OF iterate------
+
+	private void updateBidsUsingUtilites() {
 		double[][] utilities = new double[nofAgents][nofGoods];
 		// calculate current utilities and sum the utility for each agent
 		final double[] utilitySum = new double[nofAgents];
@@ -97,61 +71,151 @@ public class FisherDistributed {
 				}
 			}
 		}
-
 		for (int i = 0; i < nofAgents; i++) {
 			for (int j = 0; j < nofGoods; j++) {
 				bids[i][j] = utilities[i][j] / utilitySum[i];
 			}
 		}
-		generateAllocations();
-
-		return currentAllocation;
+		
 	}
 
-	// checks if the prices are stable
-	public boolean isStable() {
-		return change < THRESHOLD;
-	}
-
-	public double getChange() {
-		return change;
-	}
-
-	public Double[][] getAllocations() {
-
-		return currentAllocation;
-	}
-
-	@Override
-	public String toString() {
-
-		StringBuilder sb = new StringBuilder();
-		sb.append("FisherPrd:").append("\n");
-		sb.append("valuations:").append("\n");
+	private void updateCurrentAllocationMatrixAndChanges() {
+		change = 0;
 		for (int i = 0; i < nofAgents; i++) {
 			for (int j = 0; j < nofGoods; j++) {
-				sb.append(valuations[i][j] + "\t");
+				updateSumOfChanges(i,j);
+				updateCurrentAllocation(i,j);
+				
 			}
-			sb.append("\n");
-		}
-		sb.append("bids:").append("\n");
-		for (int i = 0; i < nofAgents; i++) {
-			for (int j = 0; j < nofGoods; j++) {
-				sb.append(Math.round(bids[i][j] * 1000.0) / 1000.0 + "\t");
-			}
-			sb.append("\n");
-		}
-		sb.append("allocations:").append("\n");
-		for (int i = 0; i < nofAgents; i++) {
-			for (int j = 0; j < nofGoods; j++) {
-				sb.append(Math.round(currentAllocation[i][j] * 1000.0) / 1000.0
-						+ "\t");
-				// sb.append(currentAllocation[i][j] + "\t");
-			}
-			sb.append("\n");
-		}
-
-		return sb.toString();
+		}		
 	}
 
+	private void updatePriceVectorUsingBids() {
+		for (int j = 0; j < nofGoods; j++) {
+			prices[j] = 0;
+			for (int i = 0; i < nofAgents; i++) {
+				prices[j] += bids[i][j];
+			}
+		}
+	}
+
+	//-----------METHODS OF updateCurrentAllocationMatrixAndChanges------
+
+	private void updateCurrentAllocation(int i, int j) {
+		if (bids[i][j]/prices[j] > THRESHOLD) {
+			currentAllocation[i][j] = bids[i][j] / prices[j];//aaaaa
+		} else {
+			currentAllocation[i][j] = null;
+		}
+		
+	}
+
+	private void updateSumOfChanges(int i, int j) {
+		if (currentAllocation[i][j] != null) {
+			change += Math
+					.abs(((bids[i][j]/ prices[j]) - currentAllocation[i][j]));///aaaa
+		}
+	}
+
+	
+	
+	
+	
+	//-----------Getters and Object methods------
+
+		
+
+		public double getChange() {
+			return change;
+		}
+
+		public Double[][] getAllocations() {
+
+			return currentAllocation;
+		}
+
+		@Override
+		public String toString() {
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("FisherPrd:").append("\n");
+			sb.append("valuations:").append("\n");
+			for (int i = 0; i < nofAgents; i++) {
+				for (int j = 0; j < nofGoods; j++) {
+					sb.append(valuations[i][j] + "\t");
+				}
+				sb.append("\n");
+			}
+			sb.append("bids:").append("\n");
+			for (int i = 0; i < nofAgents; i++) {
+				for (int j = 0; j < nofGoods; j++) {
+					sb.append(Math.round(bids[i][j] * 1000.0) / 1000.0 + "\t");
+				}
+				sb.append("\n");
+			}
+			sb.append("allocations:").append("\n");
+			for (int i = 0; i < nofAgents; i++) {
+				for (int j = 0; j < nofGoods; j++) {
+					sb.append(Math.round(currentAllocation[i][j] * 1000.0) / 1000.0
+							+ "\t");
+					// sb.append(currentAllocation[i][j] + "\t");
+				}
+				sb.append("\n");
+			}
+
+			return sb.toString();
+		}
+
+
+
+		//-----------METHODS OF CONSTRUCTOR------
+		
+		private void initializeBids(Utility[][] utilities) {
+			for (int i = 0; i < nofAgents; i++) {
+				for (int j = 0; j < nofGoods; j++) {
+					if (utilities[i][j] != null) {
+						bids[i][j] = 1*(i+1);
+					}
+				}
+			}
+			
+		}
+
+		private void initializeValuations(Utility[][] utilities) {
+			final double[] valuationSums = new double[nofAgents]; // utilits sum of rows, 
+			for (int i = 0; i < nofAgents; i++) {
+				for (int j = 0; j < nofGoods; j++) {
+					if (utilities[i][j] != null) {
+						this.valuations[i][j] = (Utility) utilities[i][j].clone();
+						valuationSums[i] += utilities[i][j].getUtility(1);
+					}
+				}
+			}
+			
+		}
+
+		private void initializeFields(Utility[][] utilities) {
+			this.nofGoods = utilities[0].length; // number columns =  number of goods 
+			this.nofAgents = utilities.length; // number of rows =  number of agents
+			this.currentAllocation = new Double[nofAgents][nofGoods];// X
+			this.bids = new double[nofAgents][nofGoods]; // the prices each agents offers per goods
+			this.valuations = new Utility[nofAgents][nofGoods]; // ?
+			this.prices = new double[nofGoods]; // price vector
+		}
+
+
+		//-----------METHODS OF GENERATE ALLOCATIONS------
+
+		
+
+		
+		
+		// generates allocation according to current bids and prices
+		/*
+		private Double[][] generateAllocations() {
+			updatePriceVectorUsingBids();
+			updateCurrentAllocationMatrixAndChanges();
+			return currentAllocation;
+		}
+		*/
 }
