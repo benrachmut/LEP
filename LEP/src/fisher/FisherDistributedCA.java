@@ -17,19 +17,22 @@ public class FisherDistributedCA {
 	protected int nofAgents;
 	protected int nofGoods;
 	protected double change;
-
-	public FisherDistributedCA(Vector<PoliceUnit> agents, Vector<Task> tasks, double Tnow) { 
-		
-		Mailer mailer = new Mailer();
-		for (PoliceUnit a : agents) {
-			// each agent creates its initial utility per task and when finishes
-			// decides on the bids
-			a.createUtiliesAndBids(tasks, mailer,Tnow);
-		}
-		
+	protected int numberOfIteration;
+	protected Mailer mailer;
+	
+	public FisherDistributedCA(Vector<PoliceUnit> agents, Vector<Task> tasks, double Tnow, Mailer mailer) { 
+		numberOfIteration = 0;
+		this.mailer = mailer;
 		for (Task t : tasks) {
-			t.updateMailer(mailer);
+			t.updateMailer(this.mailer);
 		}
+		
+		for (PoliceUnit a : agents) {
+			// each agent creates its initial utility per task and when finishes decides on the bids
+			a.createUtiliesBidsAndSendBids(tasks, this.mailer,Tnow);
+		}
+		
+		
 		
 		
 	}
@@ -38,8 +41,10 @@ public class FisherDistributedCA {
 	// algorithm
 	public Double[][] algorithm() {
 		iterate();
+		numberOfIteration ++;
 		while (!isStable()) {
 			iterate();
+			numberOfIteration++;
 		}
 
 		return currentAllocation;

@@ -44,6 +44,8 @@ public class DynamicPoliceAllocation {
 	protected double fraction;
 
 	private MetricsSummary metrics2;
+	
+	private Mailer mailer;
 
 	// Constructor for real simulation///////////////////////
 
@@ -62,6 +64,7 @@ public class DynamicPoliceAllocation {
 		diary.add(new EndShiftEvent(Tmax));
 		this.metrics2 = metrics2;
 		metrics = metrics2.createNewMetrics(shift);
+		this.mailer = new Mailer (MainSimulationForThreads.shift);
 
 	}
 
@@ -90,7 +93,7 @@ public class DynamicPoliceAllocation {
 	public void runSimulation() throws Exception {
 		Told = 0;
 		//printCurrentAllocation();
-
+		
 		do {
 			
 			
@@ -385,7 +388,7 @@ public class DynamicPoliceAllocation {
 				policeUnits);
 		
 		FisherDistributedSolverCA s = new FisherDistributedSolverCA(utilities,
-				cco, activeEventsForAllocation, policeUnits, Tnow);
+				cco, activeEventsForAllocation, policeUnits, Tnow, mailer);
 		
 		//FisherDistributedSolver s = new FisherDistributedSolver(utilities,
 		//new CooperativeCycleOrdering(activeEventsForAllocation, Tnow,

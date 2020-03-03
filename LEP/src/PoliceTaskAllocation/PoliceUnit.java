@@ -12,14 +12,17 @@ import TaskAllocation.ConcaveUtilityThresholds;
 import TaskAllocation.LinearUtility;
 import TaskAllocation.Location;
 import TaskAllocation.Mailer;
+import TaskAllocation.Message;
+import TaskAllocation.Messageable;
 import TaskAllocation.Task;
 import TaskAllocation.Utility;
 
-public class PoliceUnit extends Agent {
+public class PoliceUnit extends Agent implements Messageable {
 
+	private int decisionCounter;
 	private Map<Task, Utility> utilitiesMap;
 	private Map<Task, Double> bidsMap;
-
+	private Mailer mailer;
 	public PoliceUnit(Location location, int id, HashSet<AgentType> agentType) {
 		super(location, id, agentType);
 	}
@@ -29,24 +32,39 @@ public class PoliceUnit extends Agent {
 		// TODO Auto-generated constructor stub
 	}
 
-	public void createUtiliesAndBids(Vector<Task> tasks, Mailer mailer, double Tnow) {
+	public void createUtiliesBidsAndSendBids(Vector<Task> tasks, Mailer mailer, double Tnow) {
+		decisionCounter= 0;
+		this.mailer = mailer;
+
 		initUtilitiesMap(tasks, Tnow);
 		initBidsMap();
-		sendBidsToTasks(tasks, mailer);
+		sendBidsToTasks(tasks);
+	}
+
+	private void sendBidsToTasks(Vector<Task> tasks) {
+		
+		for (Entry<Task, Double> e : bidsMap.entrySet()) {
+			Task task = e.getKey();
+			Double bid = e.getValue();
+			
+			this.createMessage(task,bid);
+		}
 	}
 
 	private void initBidsMap() {
 		this.bidsMap = new HashMap<Task, Double>();
-		double sumUtilis = calcSumUtils();
+		double sumUtilities = calcSumUtils();
+		placeBidsInMap(sumUtilities);
 		
 		
-		
-		
+	}
+
+	private void placeBidsInMap(double sumUtilities) {
 		for (Entry<Task, Utility> e : utilitiesMap.entrySet()) {
-			Task task = e.getValue();
-			
-			
-			this.bidsMap.put(, )
+			Task task = e.getKey();
+			Utility u  = e.getValue();
+			Double bid = u.getUtility(1)/sumUtilities;
+			this.bidsMap.put(task,bid);
 		}
 		
 	}
@@ -65,6 +83,16 @@ public class PoliceUnit extends Agent {
 			Utility u = new ConcaveUtilityThresholds(this, task, Tnow, 1);
 			this.utilitiesMap.put(task, u);
 		}
+	}
+
+	@Override
+	public void getMessage(Message m) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void createMessage(Messageable task, double bid) {
+		this.mailer.createMessage(this, this.decisionCounter, task, bid);
 	}
 
 }

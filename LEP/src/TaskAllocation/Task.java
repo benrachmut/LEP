@@ -10,7 +10,8 @@ import java.util.Vector;
 import Helpers.URLConnectionReader;
 import PoliceTaskAllocation.AgentType;
 
-public class Task implements Distancable, Serializable, Comparable<Task> {
+public class Task implements Distancable, Serializable, Comparable<Task>, Messageable{
+	protected Mailer mailer;
 	protected Location location;// the location of the mission
 	
 	protected double totalDuration;// the remaining duration of the mission
@@ -394,6 +395,13 @@ public class Task implements Distancable, Serializable, Comparable<Task> {
 	public boolean isAgentTypeRequired(AgentType key) {
 		return agentsRequiered.containsKey(key);
 	}
+
+	public void updateMailer(Mailer mailer) {
+		this.mailer = mailer;
+		
+	}
+
+	
 	
 
 }
