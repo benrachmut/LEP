@@ -2,6 +2,7 @@ package PoliceTaskAllocation;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
@@ -21,6 +22,7 @@ public class PoliceUnit extends Agent implements Messageable {
 
 	private int decisionCounter;
 	private Map<Task, Utility> utilitiesMap;
+	private Map<Task, Double> updatedUtilitiesMap;
 	private Map<Task, Double> bidsMap;
 	private Mailer mailer;
 	public PoliceUnit(Location location, int id, HashSet<AgentType> agentType) {
@@ -33,61 +35,88 @@ public class PoliceUnit extends Agent implements Messageable {
 	}
 
 	public void createUtiliesBidsAndSendBids(Vector<Task> tasks, Mailer mailer, double Tnow) {
-		decisionCounter= 0;
 		this.mailer = mailer;
-
-		initUtilitiesMap(tasks, Tnow);
-		initBidsMap();
-		sendBidsToTasks(tasks);
+		initMapsInVariables();
+		placeUtilitiesInMap(tasks, Tnow);
+		placeBidsWithUpdatedUtilityInMap();	
+		sendBidsToTasks();
 	}
 
-	private void sendBidsToTasks(Vector<Task> tasks) {
-		
+	private void initMapsInVariables() {
+		this.decisionCounter= 0;
+		this.bidsMap = new HashMap<Task, Double>();
+		this.utilitiesMap = new HashMap<Task, Utility>();
+		this.updatedUtilitiesMap = new HashMap<Task, Double>();
+	}
+
+	
+	private void sendBidsToTasks() {	
 		for (Entry<Task, Double> e : bidsMap.entrySet()) {
 			Task task = e.getKey();
 			Double bid = e.getValue();
-			
 			this.createMessage(task,bid);
 		}
 	}
 
-	private void initBidsMap() {
-		this.bidsMap = new HashMap<Task, Double>();
-		double sumUtilities = calcSumUtils();
-		placeBidsInMap(sumUtilities);
-		
-		
-	}
 
-	private void placeBidsInMap(double sumUtilities) {
-		for (Entry<Task, Utility> e : utilitiesMap.entrySet()) {
+
+	private void placeBidsWithUpdatedUtilityInMap() {
+		double sumUtilities = calcSumUtils();
+		for (Entry<Task, Double> e : updatedUtilitiesMap.entrySet()) {
 			Task task = e.getKey();
-			Utility u  = e.getValue();
-			Double bid = u.getUtility(1)/sumUtilities;
+			Double updetedUtility  = e.getValue();
+			Double bid = updetedUtility/sumUtilities;
 			this.bidsMap.put(task,bid);
-		}
-		
+		}	
 	}
 
 	private double calcSumUtils() {
 		double ans = 0.0;
-		for (Utility u : utilitiesMap.values()) {
-			ans = ans+ u.getUtility(1);
+		for (Double d: updatedUtilitiesMap.values()) {
+			ans = ans+ d;
 		}
 		return ans;
 	}
 
-	private void initUtilitiesMap(Vector<Task> tasks, double Tnow) {
-		this.utilitiesMap = new HashMap<Task, Utility>();
+	private void placeUtilitiesInMap(Vector<Task> tasks, double Tnow) {
+	
 		for (Task task : tasks) {
 			Utility u = new ConcaveUtilityThresholds(this, task, Tnow, 1);
 			this.utilitiesMap.put(task, u);
+			this.updatedUtilitiesMap.put(task, u.getUtility(1));
 		}
 	}
 
 	@Override
-	public void getMessage(Message m) {
-		// TODO Auto-generated method stub
+	public void recieveMessage(List<Message> msgs) {
+		this.decisionCounter++;
+		updateUtilitesUsingAllocation(msgs);
+		placeBidsWithUpdatedUtilityInMap();	
+		sendBidsToTasks();
+	}
+
+	private void updateUtilitesUsingAllocation(List<Message> msgs) {
+		
+		for (Message m : msgs) {
+		//-------- extract info from msg	
+			Messageable sender= m.getSender();
+			checkIfBug(sender);
+			Task t = (Task)sender;
+			double allocation  = m.getContext();
+
+		//-------- update utility map	
+			Utility u = utilitiesMap.get(t);
+			Double updatedUtility= u.getUtility(allocation);
+			this.updatedUtilitiesMap.put(t, updatedUtility);
+		}
+		
+	}
+
+	private void checkIfBug(Messageable sender) {
+		if (!(sender instanceof Task)) {
+			System.err.println("logical bug in creating message in task");
+		}
+		
 	}
 
 	@Override

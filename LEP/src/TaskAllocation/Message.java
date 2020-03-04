@@ -1,6 +1,6 @@
 package TaskAllocation;
 
-public class Message {
+public class Message implements Comparable<Message> {
 	private Messageable sender; 
 	private int decisionCounter; 
 	private Messageable reciever; 
@@ -14,7 +14,35 @@ public class Message {
 		this.context=context; 
 		this.delay=delay;
 	}
+
+	public int getDelay() {
+		return this.delay;
+	}
 	
+	@Override
+	public int compareTo(Message o) {
+		return this.delay - o.delay;
+	}
+
+	public void setDelay(int input) {
+		this.delay = input;
+	}
+
+	public Messageable getReciever() {
+		// TODO Auto-generated method stub
+		return this.reciever;
+	}
+
+	public double getContext() {
+		// TODO Auto-generated method stub
+		return this.context;
+	}
+
+	public Messageable getSender() {
+		// TODO Auto-generated method stub
+		return this.sender;
+	}
+
 	
 
 }

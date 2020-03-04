@@ -22,6 +22,9 @@ public class MainSimulationForThreads {
 	static int i;
 	static int shift;
 	static int agents;
+	static double p3;
+	static double p4;
+	static int UB;
 
 	public static void main(String[] args) throws Exception {
 		for (i = 3; i <= 3; i++) {
@@ -37,7 +40,7 @@ public class MainSimulationForThreads {
 				metrics.setup(numOfMissionsOnShift);
 				cumulativeSW = new TreeMap<Double, Double>();		
 				shift = 0;
-				/*
+				
 				int cores = 1;
 				ThreadSimulation[] threads = new ThreadSimulation[cores];
 				
@@ -51,8 +54,8 @@ public class MainSimulationForThreads {
 					threads[j].join();
 				}
 				
-				*/
 				
+				/*
 				DynamicPoliceAllocation d = MainSimulationForThreads.newSimulation();
 				while(d!= null){
 					try {
@@ -63,6 +66,7 @@ public class MainSimulationForThreads {
 					}
 					d = MainSimulationForThreads.newSimulation();
 				}
+				*/
 				
 				metrics.writeToFile();
 				WriteToFile.writeCumultiveUtilitiyToFile(cumulativeSW, 100,

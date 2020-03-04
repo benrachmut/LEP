@@ -3,15 +3,16 @@ package TaskAllocation;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
 
 import Helpers.URLConnectionReader;
 import PoliceTaskAllocation.AgentType;
+import PoliceTaskAllocation.PoliceUnit;
 
 public class Task implements Distancable, Serializable, Comparable<Task>, Messageable{
-	protected Mailer mailer;
 	protected Location location;// the location of the mission
 	
 	protected double totalDuration;// the remaining duration of the mission
@@ -44,6 +45,11 @@ public class Task implements Distancable, Serializable, Comparable<Task>, Messag
 	protected boolean isAllocated = false;// checks if mission started and was abandoned
 	protected boolean isStarted = false;// checks if mission started
 
+	
+	protected Map<PoliceUnit,Double>bidsRecieved;
+	protected Mailer mailer;
+	protected int decisionCounter;
+	
 	public Task(double duration, int id, int priority) {
 		super();
 		this.totalDuration = duration;
@@ -396,12 +402,28 @@ public class Task implements Distancable, Serializable, Comparable<Task>, Messag
 		return agentsRequiered.containsKey(key);
 	}
 
-	public void updateMailer(Mailer mailer) {
+	public void initFisherCA(Mailer mailer) {
 		this.mailer = mailer;
+		this.bidsRecieved = new HashMap<PoliceUnit,Double>();
+		this.decisionCounter = 0;
 		
 	}
 
-	
-	
+	@Override
+	public void recieveMessage(List<Message> msgs) {
+		updateBidsInMap(msgs);
+		double price=calculatePrice();
+		Map<PoliceUnit,Double> allocation = reallocation(price);
+		updateChange(allocation);
+		sendAllocation(allocation)
+	}
 
+	@Override
+	public void createMessage(Messageable reciver, double context) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+		
 }

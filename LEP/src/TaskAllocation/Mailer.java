@@ -1,6 +1,8 @@
 package TaskAllocation;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
@@ -60,5 +62,22 @@ public class Mailer {
 	
 	private static int getRandomInt(Random r, int min, int max) {
 		return r.nextInt(max - min + 1) + min;
+	}
+
+	public List<Message> handleDelay() {
+		Collections.sort(this.messageBox);
+		List<Message> msgToSend = new ArrayList<Message>();
+		Iterator it = this.messageBox.iterator();
+
+		while (it.hasNext()) {
+			Message msg = (Message) it.next();
+			if (msg.getDelay() == 0) {
+				msgToSend.add(msg);
+				it.remove();
+			} else {
+				msg.setDelay(msg.getDelay() - 1);
+			}
+		}
+		return msgToSend;
 	}
 }

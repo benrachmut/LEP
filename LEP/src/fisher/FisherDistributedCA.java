@@ -1,6 +1,11 @@
 package fisher;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 
 import FordFulkerson.FlowNetwork;
@@ -16,46 +21,86 @@ public class FisherDistributedCA {
 
 	protected int nofAgents;
 	protected int nofGoods;
-	protected double change;
+	//protected double change;
 	protected int numberOfIteration;
+	protected Map<Task, Double> changes;
 	protected Mailer mailer;
-	
+	protected Vector<Task> events;
+	protected Vector<PoliceUnit> policeUnits;
+
 	public FisherDistributedCA(Vector<PoliceUnit> agents, Vector<Task> tasks, double Tnow, Mailer mailer) { 
-		numberOfIteration = 0;
+		this.numberOfIteration = 0;
 		this.mailer = mailer;
-		for (Task t : tasks) {
-			t.updateMailer(this.mailer);
-		}
+		this.changes = new HashMap<Task, Double>();
+		this.events = tasks; 
+		this.policeUnits = agents;
 		
+		for (Task t : tasks) {
+			t.initFisherCA(this.mailer);
+			changes.put(t,Double.MAX_VALUE);
+		}		
 		for (PoliceUnit a : agents) {
 			// each agent creates its initial utility per task and when finishes decides on the bids
 			a.createUtiliesBidsAndSendBids(tasks, this.mailer,Tnow);
 		}
-		
-		
-		
-		
 	}
 
 	
 	// algorithm
 	public Double[][] algorithm() {
-		iterate();
-		numberOfIteration ++;
+		do {
+			iterate();
+			numberOfIteration ++;
+		} while (!isStable());
+		return createCentralisticAllocation();
+		/*
 		while (!isStable()) {
 			iterate();
 			numberOfIteration++;
 		}
-
-		return currentAllocation;
+		*/
+		
 	}
 
 	
+	
+	
 
+
+	public Double[][] iterate() {
+		List<Message> msgToSend = mailer.handleDelay();
+		Map<Messageable,List<Message>>receiversMap = createReciversMap(msgToSend);
+		sendMessages(receiversMap);
+		updateStability();
+	}
+
+	private void sendMessages(Map<Messageable, List<Message>> receiversMap) {
+		for (Entry<Messageable, List<Message>> e : receiversMap.entrySet()) {
+			Messageable reciever = e.getKey();
+			List<Message>msgsRecieved = e.getValue();
+			reciever.recieveMessage(msgsRecieved);
+		}
+	}
+
+
+	private Map<Messageable, List<Message>> createReciversMap(List<Message> msgToSend) {
+		Map<Messageable,List<Message>>ans = new HashMap<Messageable,List<Message>>();
+		for (Message m : msgToSend) {
+			Messageable reciever = m.getReciever();
+				if (!ans.containsKey(reciever)) {
+					List<Message> l = new ArrayList<Message>();
+					ans.put(reciever, l);
+				}
+				ans.get(reciever).add(m);	
+		}
+		return ans;
+	}
 
 
 	// next iteration: calculates prices, calculates current valuation and
 	// update the bids
+	
+	/*
 	public Double[][] iterate() {
 		updateBidsUsingValutations();
 		updatePriceVectorUsingBids();
@@ -66,10 +111,38 @@ public class FisherDistributedCA {
 		//generateAllocations();
 		return currentAllocation;
 	}
+	*/
 
 	public boolean isStable() {
-		return change < THRESHOLD;
+		
+		boolean isInf = checkIfInf();
+		if (isInf) {
+			return true;
+		}
+		double sumOfChanges = getSumOfChanges();
+		return sumOfChanges < THRESHOLD;	
 	}
+
+	private double getSumOfChanges() {
+		double ans = 0;
+		
+		for (Double change : changes.values()) {
+			ans+=change;
+		}
+		
+		return ans;
+	}
+
+
+	private boolean checkIfInf() {
+		for (Double change : changes.values()) {
+			if (change == Double.MAX_VALUE) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 
 	//-----------METHODS OF iterate------
 
