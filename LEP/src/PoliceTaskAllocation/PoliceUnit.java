@@ -21,6 +21,9 @@ import TaskAllocation.Utility;
 public class PoliceUnit extends Agent implements Messageable {
 
 	private int decisionCounter;
+	
+	private Map<Task, Message> messageRecived;
+
 	private Map<Task, Utility> utilitiesMap;
 	private Map<Task, Double> updatedUtilitiesMap;
 	private Map<Task, Double> bidsMap;
@@ -44,6 +47,7 @@ public class PoliceUnit extends Agent implements Messageable {
 
 	private void initMapsInVariables() {
 		this.decisionCounter= 0;
+		this.messageRecived = new HashMap<Task, Message>();
 		this.bidsMap = new HashMap<Task, Double>();
 		this.utilitiesMap = new HashMap<Task, Utility>();
 		this.updatedUtilitiesMap = new HashMap<Task, Double>();
@@ -98,18 +102,40 @@ public class PoliceUnit extends Agent implements Messageable {
 	private void updateUtilitesUsingAllocation(List<Message> msgs) {
 		
 		for (Message m : msgs) {
+			boolean ignoreMessage = shouldIgnore(m);	
 		//-------- extract info from msg	
 			Messageable sender= m.getSender();
 			checkIfBug(sender);
 			Task t = (Task)sender;
-			double allocation  = m.getContext();
 
-		//-------- update utility map	
-			Utility u = utilitiesMap.get(t);
-			Double updatedUtility= u.getUtility(allocation);
-			this.updatedUtilitiesMap.put(t, updatedUtility);
+			if (!ignoreMessage || !MainSimulationForThreads.considerDecisionCounter) {		
+				this.messageRecived.put(t, m);
+				double allocation  = m.getContext();
+				Utility u = utilitiesMap.get(t);
+				Double updatedUtility= u.getUtility(allocation);
+				this.updatedUtilitiesMap.put(t, updatedUtility);
+			}
 		}
 		
+	}
+
+	private boolean shouldIgnore(Message m) {
+		Messageable sender= m.getSender();
+		checkIfBug(sender);
+		Task t = (Task)sender;
+		int messageDecisionCounter = m.getDecisionCounter();
+		if (!messageRecived.containsKey(t)) {
+			return false;
+		}else {
+			
+			int currentMessageDecisionCounter = messageRecived.get(t).getDecisionCounter();
+			if (currentMessageDecisionCounter < messageDecisionCounter) {
+				return false;
+			}else {
+				return true;
+			}	
+		}
+
 	}
 
 	private void checkIfBug(Messageable sender) {

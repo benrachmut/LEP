@@ -22,9 +22,13 @@ public class MainSimulationForThreads {
 	static int i;
 	static int shift;
 	static int agents;
+	
+	
 	static double p3;
 	static double p4;
 	static int UB;
+	public static boolean considerDecisionCounter = true;
+	
 
 	public static void main(String[] args) throws Exception {
 		for (i = 3; i <= 3; i++) {

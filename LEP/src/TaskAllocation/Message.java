@@ -43,6 +43,11 @@ public class Message implements Comparable<Message> {
 		return this.sender;
 	}
 
+	public int getDecisionCounter() {
+		// TODO Auto-generated method stub
+		return this.decisionCounter;
+	}
+
 	
 
 }

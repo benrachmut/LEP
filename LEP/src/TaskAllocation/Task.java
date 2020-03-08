@@ -5,11 +5,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
 
 import Helpers.URLConnectionReader;
 import PoliceTaskAllocation.AgentType;
+import PoliceTaskAllocation.MainSimulationForThreads;
 import PoliceTaskAllocation.PoliceUnit;
 
 public class Task implements Distancable, Serializable, Comparable<Task>, Messageable{
@@ -45,10 +47,13 @@ public class Task implements Distancable, Serializable, Comparable<Task>, Messag
 	protected boolean isAllocated = false;// checks if mission started and was abandoned
 	protected boolean isStarted = false;// checks if mission started
 
-	
+	// for FMC_TA CA
 	protected Map<PoliceUnit,Double>bidsRecieved;
 	protected Mailer mailer;
 	protected int decisionCounter;
+	protected Map<PoliceUnit,Message> messageRecived;
+	protected double taskChange;
+	protected Map<PoliceUnit,Double> allocation;
 	
 	public Task(double duration, int id, int priority) {
 		super();
@@ -406,22 +411,108 @@ public class Task implements Distancable, Serializable, Comparable<Task>, Messag
 		this.mailer = mailer;
 		this.bidsRecieved = new HashMap<PoliceUnit,Double>();
 		this.decisionCounter = 0;
+		this.messageRecived = new HashMap<PoliceUnit,Message>();
+		this.taskChange = -1;
+		this.allocation = new HashMap<PoliceUnit,Double>();
 		
 	}
 
+	public Map<PoliceUnit,Double> getAllocation(){
+		return this.allocation;
+	}
+	
 	@Override
 	public void recieveMessage(List<Message> msgs) {
 		updateBidsInMap(msgs);
 		double price=calculatePrice();
-		Map<PoliceUnit,Double> allocation = reallocation(price);
+		this.allocation = reallocation(price);
 		updateChange(allocation);
-		sendAllocation(allocation)
+		sendAllocation(allocation);
 	}
 
-	@Override
-	public void createMessage(Messageable reciver, double context) {
-		// TODO Auto-generated method stub
+	private void sendAllocation(Map<PoliceUnit, Double> allocation) {
+		for (Entry<PoliceUnit, Double> e : allocation.entrySet()) {
+			PoliceUnit p = e.getKey();
+			Double allocationPerPoliceUnit = e.getValue();
+			this.createMessage(p,allocationPerPoliceUnit);
+		}
 		
+	}
+
+	private void updateChange(Map<PoliceUnit, Double> allocation) {
+		double sumAllocation = 0;
+		for (Double singleAllocation: allocation.values()) {
+			sumAllocation = sumAllocation + singleAllocation; 
+		}
+		
+		if (this.taskChange == -1) {
+			this.taskChange = sumAllocation;
+		}else {
+			double delta = sumAllocation-this.taskChange;
+			this.taskChange = Math.abs(delta);
+		}
+		
+	}
+
+	private Map<PoliceUnit, Double> reallocation(double price) {
+		Map<PoliceUnit, Double> ans = new HashMap<PoliceUnit, Double>();
+		for (Entry<PoliceUnit, Double> e : this.bidsRecieved.entrySet()) {
+			PoliceUnit p = e.getKey();
+			Double bid = e.getValue();
+			ans.put(p, bid/price);
+		}
+		return ans;
+	}
+
+	private double calculatePrice() {
+		double price=0;
+		for (Double singleBid : bidsRecieved.values()) {
+			price=price+singleBid;
+		}
+		return price;
+	}
+
+	private void updateBidsInMap(List<Message> msgs) {
+		for (Message m : msgs) {
+			boolean ignoreMessage = shouldIgnore(m);	
+			Messageable sender= m.getSender();
+			PoliceUnit p = (PoliceUnit)sender;
+
+			if (!ignoreMessage || !MainSimulationForThreads.considerDecisionCounter) {		
+				this.messageRecived.put(p, m);
+				double bid  = m.getContext();
+				this.bidsRecieved.put(p, bid);
+			}
+		}
+		
+	}
+	
+	private boolean shouldIgnore(Message m) {
+		Messageable sender= m.getSender();
+		PoliceUnit p = (PoliceUnit)sender;
+		int messageDecisionCounter = m.getDecisionCounter();
+		if (!messageRecived.containsKey(p)) {
+			return false;
+		}else {
+			
+			int currentMessageDecisionCounter = messageRecived.get(p).getDecisionCounter();
+			if (currentMessageDecisionCounter < messageDecisionCounter) {
+				return false;
+			}else {
+				return true;
+			}	
+		}
+
+	}
+
+	
+	@Override
+	public void createMessage(Messageable p, double allocation) {
+		this.mailer.createMessage(this, this.decisionCounter, p, allocation);
+	}
+
+	public double getTaskChanges() {
+		return this.taskChange;
 	}
 
 
